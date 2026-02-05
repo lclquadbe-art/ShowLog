@@ -262,10 +262,11 @@
 
         <div id="searchSection" style="display: none;">
             <div class="upload-section">
-                <h2>🔎 모델 검색</h2>
+                <h2>🔎 모델 검색 및 필터</h2>
                 <input type="text" id="searchInput" placeholder="모델명을 입력하세요 (예: 3FP, Clone, CL A1 등)" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
-                <div style="display: flex; gap: 10px; justify-content: center;">
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button onclick="searchModels()">🔍 검색</button>
+                    <button onclick="showErrorModels()" style="background: #dc3545;">⚠️ 에러 모델만 보기</button>
                     <button onclick="resetSearch()" style="background: #6c757d;">🔄 전체 보기</button>
                 </div>
                 <div id="searchInfo" style="margin-top: 15px; color: #666; text-align: center;"></div>
@@ -315,8 +316,11 @@
             }
         }
 
-        function displayData(models) {
-            allModelsData = models; // 전체 데이터 저장
+        function displayData(models, keepOriginalData = false) {
+            if (!keepOriginalData) {
+                allModelsData = models; // 전체 데이터 저장
+            }
+            
             const container = document.getElementById('modelContainer');
             const summaryDiv = document.getElementById('summary');
             container.innerHTML = '';
@@ -422,13 +426,31 @@
             document.getElementById('searchInfo').innerHTML = 
                 `<span style="color: #28a745;">✅ "${searchTerm}"로 검색한 결과: ${filteredModels.length}개 모델</span>`;
 
-            displayData(filteredModels);
+            displayData(filteredModels, true);
+        }
+
+        function showErrorModels() {
+            const errorModels = allModelsData.filter(model => 
+                model.errorLog.length > 0
+            );
+
+            if (errorModels.length === 0) {
+                document.getElementById('searchInfo').innerHTML = 
+                    `<span style="color: #28a745;">✅ 에러가 있는 모델이 없습니다!</span>`;
+                displayData([], true);
+                return;
+            }
+
+            document.getElementById('searchInfo').innerHTML = 
+                `<span style="color: #dc3545;">⚠️ 에러가 있는 모델: ${errorModels.length}개</span>`;
+
+            displayData(errorModels, true);
         }
 
         function resetSearch() {
             document.getElementById('searchInput').value = '';
             document.getElementById('searchInfo').innerHTML = '';
-            displayData(allModelsData);
+            displayData(allModelsData, true);
         }
 
         // Enter 키로 검색
