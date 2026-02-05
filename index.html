@@ -253,11 +253,23 @@
             <h2>JSON 데이터 입력</h2>
             <textarea id="jsonInput" placeholder='{"modelDataList": [...]} 형식의 JSON을 붙여넣거나, 파일을 업로드하세요'></textarea>
             <div class="file-input-wrapper">
-                <input type="file" id="fileInput" accept="*">
+                <input type="file" id="fileInput" accept=".json">
                 <label for="fileInput" class="file-label">📁 JSON 파일 선택</label>
                 <span id="fileName" style="margin-left: 15px; color: #666;"></span>
             </div>
             <button onclick="parseJSON()">🔍 데이터 분석</button>
+        </div>
+
+        <div id="searchSection" style="display: none;">
+            <div class="upload-section">
+                <h2>🔎 모델 검색</h2>
+                <input type="text" id="searchInput" placeholder="모델명을 입력하세요 (예: 3FP, Clone, CL A1 등)" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="searchModels()">🔍 검색</button>
+                    <button onclick="resetSearch()" style="background: #6c757d;">🔄 전체 보기</button>
+                </div>
+                <div id="searchInfo" style="margin-top: 15px; color: #666; text-align: center;"></div>
+            </div>
         </div>
 
         <div id="results">
@@ -267,6 +279,8 @@
     </div>
 
     <script>
+        let allModelsData = []; // 전체 모델 데이터 저장
+
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -302,9 +316,13 @@
         }
 
         function displayData(models) {
+            allModelsData = models; // 전체 데이터 저장
             const container = document.getElementById('modelContainer');
             const summaryDiv = document.getElementById('summary');
             container.innerHTML = '';
+
+            // 검색 섹션 표시
+            document.getElementById('searchSection').style.display = 'block';
 
             // 요약 정보 생성
             let totalErrors = 0;
@@ -383,6 +401,45 @@
             document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
         }
 
+        function searchModels() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            
+            if (!searchTerm) {
+                alert('검색어를 입력해주세요!');
+                return;
+            }
+
+            const filteredModels = allModelsData.filter(model => 
+                model.modelName.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredModels.length === 0) {
+                document.getElementById('searchInfo').innerHTML = 
+                    `<span style="color: #dc3545;">⚠️ "${searchTerm}"에 해당하는 모델을 찾을 수 없습니다.</span>`;
+                return;
+            }
+
+            document.getElementById('searchInfo').innerHTML = 
+                `<span style="color: #28a745;">✅ "${searchTerm}"로 검색한 결과: ${filteredModels.length}개 모델</span>`;
+
+            displayData(filteredModels);
+        }
+
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchInfo').innerHTML = '';
+            displayData(allModelsData);
+        }
+
+        // Enter 키로 검색
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchModels();
+                }
+            });
+        });
+
         function createListCell(items, id, isError = false) {
             if (items.length === 0) {
                 return `<span class="empty-cell">-</span>`;
@@ -407,7 +464,9 @@
         }
 
         // 샘플 데이터 자동 로드 (테스트용)
-        const sampleData = {};
+        const sampleData = {
+            
+        };
 
         // 페이지 로드시 샘플 데이터 자동 입력
         document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
